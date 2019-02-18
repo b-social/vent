@@ -6,10 +6,10 @@
   (:import
     [java.util UUID]))
 
+(def url-template "https://%s.com/%s/%s")
+
 (defn random-uuid []
   (str (UUID/randomUUID)))
-
-(def url-template "https://%s.com/%s/%s")
 
 (defn random-url
   ([] (random-url (random-uuid)))

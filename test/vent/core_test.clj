@@ -12,18 +12,11 @@
 
     [vent.test-support.data :as data]
 
-    [vent.core
-     :refer [Action
-             ruleset
-             from
-             on
-             determine-actions
-             execute-action
-             execute-actions
-             react-to]]))
+    [vent.core :as vent]
+    [vent.hal :as vent-hal]))
 
 (defrecord TestAction [identifier event context]
-  Action
+  vent/Action
   (execute [_ _]))
 
 (defn test-action [& {:as options}]
@@ -38,24 +31,23 @@
 
 (deftest generates-action-when-event-matched
   (let [ruleset
-        (ruleset
-          (from :some-event-channel
-            (on :some-event-type
+        (vent/ruleset
+          (vent/from :some-event-channel
+            (vent/on :some-event-type
               (capture-as :some-action))))
 
         event-channel "some-event-channel"
-        event-resource
-        (hal/add-properties
-          (hal/new-resource (data/random-url))
-          {:type    "some-event-type"
-           :message "An important message"})
+        event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
 
-        event {:channel  event-channel
-               :resource event-resource}
+        event
+        {:channel event-channel
+         :payload event-payload}
 
         context {:thing "thing"}
 
-        actions (determine-actions ruleset event context)]
+        actions (vent/determine-actions ruleset event context)]
     (is (= [(test-action
               :identifier :some-action
               :event event
@@ -64,22 +56,24 @@
 
 (deftest allows-multiple-actions-for-the-same-event
   (let [ruleset
-        (ruleset
-          (from :some-event-channel
-            (on :some-event-type
+        (vent/ruleset
+          (vent/from :some-event-channel
+            (vent/on :some-event-type
               (capture-as :action-1)
               (capture-as :action-2))))
 
         event-channel "some-event-channel"
-        event-resource (hal/add-properties
-                         (hal/new-resource (data/random-url))
-                         {:type    "some-event-type"
-                          :message "An important message"})
-        event {:channel event-channel :resource event-resource}
+        event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
+
+        event
+        {:channel  event-channel
+         :payload event-payload}
 
         context {}
 
-        actions (determine-actions ruleset event context)]
+        actions (vent/determine-actions ruleset event context)]
     (is (= [(test-action
               :identifier :action-1
               :event event
@@ -92,23 +86,25 @@
 
 (deftest correctly-determines-actions-when-many-event-types-are-defined
   (let [ruleset
-        (ruleset
-          (from :some-event-channel
-            (on :some-event-type
+        (vent/ruleset
+          (vent/from :some-event-channel
+            (vent/on :some-event-type
               (capture-as :some-action))
-            (on :other-event-type
+            (vent/on :other-event-type
               (capture-as :other-action))))
 
         event-channel "some-event-channel"
-        event-resource (hal/add-properties
-                         (hal/new-resource (data/random-url))
-                         {:type    "other-event-type"
-                          :message "The message"})
-        event {:channel event-channel :resource event-resource}
+        event-payload
+        {:type    "other-event-type"
+         :message "The message"}
+
+        event
+        {:channel event-channel
+         :payload event-payload}
 
         context {}
 
-        actions (determine-actions ruleset event context)]
+        actions (vent/determine-actions ruleset event context)]
     (is (= [(test-action
               :identifier :other-action
               :event event
@@ -117,24 +113,58 @@
 
 (deftest correctly-determines-actions-when-many-topics-are-defined
   (let [ruleset
-        (ruleset
-          (from :first-event-channel
-            (on :some-event-type
+        (vent/ruleset
+          (vent/from :first-event-channel
+            (vent/on :some-event-type
               (capture-as :first-channel-action)))
-          (from :second-event-channel
-            (on :some-event-type
+          (vent/from :second-event-channel
+            (vent/on :some-event-type
               (capture-as :second-channel-action))))
 
         event-channel "second-event-channel"
-        event-resource (hal/add-properties
-                         (hal/new-resource (data/random-url))
-                         {:type    "some-event-type"
-                          :message "The message"})
-        event {:channel event-channel :resource event-resource}
+        event-payload
+        {:type    "some-event-type"
+         :message "The message"}
+        event
+        {:channel event-channel
+         :payload event-payload}
 
         context {}
 
-        actions (determine-actions ruleset event context)]
+        actions (vent/determine-actions ruleset event context)]
+    (is (= [(test-action
+              :identifier :second-channel-action
+              :event event
+              :context context)]
+          actions))))
+
+(deftest allows-event-type-lookup-function-to-be-overridden
+  (let [ruleset
+        (vent/ruleset
+          (vent/options
+            :event-type-fn (vent-hal/event-type-property :type))
+
+          (vent/from :first-event-channel
+            (vent/on :some-event-type
+              (capture-as :first-channel-action)))
+          (vent/from :second-event-channel
+            (vent/on :some-event-type
+              (capture-as :second-channel-action))))
+
+        event-channel "second-event-channel"
+        event-resource
+        (hal/add-properties
+          (hal/new-resource (data/random-url))
+          {:type    "some-event-type"
+           :message "The message"})
+
+        event
+        {:channel event-channel
+         :payload event-resource}
+
+        context {}
+
+        actions (vent/determine-actions ruleset event context)]
     (is (= [(test-action
               :identifier :second-channel-action
               :event event
