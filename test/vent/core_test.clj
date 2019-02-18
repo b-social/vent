@@ -111,7 +111,7 @@
               :context context)]
           actions))))
 
-(deftest correctly-determines-actions-when-many-topics-are-defined
+(deftest correctly-determines-actions-when-many-event-channels-are-defined
   (let [ruleset
         (vent/ruleset
           (vent/from :first-event-channel
@@ -161,6 +161,37 @@
         event
         {:channel event-channel
          :payload event-resource}
+
+        context {}
+
+        actions (vent/determine-actions ruleset event context)]
+    (is (= [(test-action
+              :identifier :second-channel-action
+              :event event
+              :context context)]
+          actions))))
+
+(deftest allows-event-channel-lookup-function-to-be-overridden
+  (let [ruleset
+        (vent/ruleset
+          (vent/options
+            :event-channel-fn (fn [event] (keyword (:topic event))))
+
+          (vent/from :first-event-channel
+            (vent/on :some-event-type
+              (capture-as :first-channel-action)))
+          (vent/from :second-event-channel
+            (vent/on :some-event-type
+              (capture-as :second-channel-action))))
+
+        event-channel "second-event-channel"
+        event-payload
+        {:type    "some-event-type"
+         :message "The message"}
+
+        event
+        {:topic event-channel
+         :payload event-payload}
 
         context {}
 

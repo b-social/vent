@@ -7,6 +7,8 @@
 
 (def ^:private default-event-type-fn
   (fn [event] (keyword (get-in event [:payload :type]))))
+(def ^:private default-event-channel-fn
+  (fn [event] (keyword (get-in event [:channel]))))
 
 (defn- having-key [seq key]
   (filterv #(contains? % key) seq))
@@ -14,9 +16,9 @@
 (defn- merge-over [seq-of-maps]
   (apply merge seq-of-maps))
 
-(defn- extract-from
-  ([fragments key] (extract-from fragments key {}))
-  ([fragments key defaults]
+(defn- collect-from
+  ([fragments key] (collect-from fragments key :defaults {}))
+  ([fragments key & {:keys [defaults]}]
     (let [relevant (concat [{key defaults}] (having-key fragments key))
            extracted {key (merge-over (mapv key relevant))}]
       extracted)))
@@ -27,10 +29,10 @@
     rule))
 
 (defn ruleset [& fragments]
-  (let [option-defaults {:event-type-fn default-event-type-fn}
-        options (extract-from fragments :options option-defaults)
-
-        rules (extract-from fragments :rules)]
+  (let [options (collect-from fragments :options
+                  :defaults {:event-channel-fn default-event-channel-fn
+                             :event-type-fn    default-event-type-fn})
+        rules (collect-from fragments :rules)]
     (merge options rules)))
 
 (defn options [& {:as options}]
@@ -45,9 +47,9 @@
 
 (defn determine-actions [ruleset event context]
   (let [{:keys [options rules]} ruleset
-        {:keys [channel]} event
+        {:keys [event-channel-fn]} options
 
-        channel-rules (or ((keyword channel) rules) [])
+        channel-rules (or ((event-channel-fn event) rules) [])
 
         event-rules
         (filterv
