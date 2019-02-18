@@ -3,7 +3,14 @@
   :url "https://github.com/b-social/vent"
   :license {:name "The MIT License"
             :url  "https://opensource.org/licenses/MIT"}
+  :deploy-repositories [["releases" {:url   "https://clojars.org/repo/"
+                                     :creds :gpg}]]
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [halboy "4.0.1"]]
-  :deploy-repositories [["releases" {:url   "https://clojars.org/repo/"
-                                     :creds :gpg}]])
+  :plugins [[lein-eftest "0.5.3"]]
+  :profiles {:shared {:dependencies [[faker "0.3.2"]
+                                     [clj-fakes "0.11.0"]
+                                     [eftest "0.5.3"]]}
+             :dev    [:shared]
+             :test   [:shared]}
+  :eftest {:multithread? false})
