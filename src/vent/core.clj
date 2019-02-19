@@ -5,7 +5,7 @@
 (defprotocol Action
   (execute [this context]))
 
-(defprotocol Contextualiser
+(defprotocol Gatherer
   (add-context-to [this context]))
 
 (def ^:private default-event-type-fn
@@ -48,29 +48,29 @@
   {:rules {(keyword channel) event-rules}})
 
 (defn on [event-type & handlers]
-  {:event-type              event-type
-   :contextualiser-handlers (filterv #(= (:type %) :contextualiser) handlers)
-   :action-handlers         (filterv #(= (:type %) :action) handlers)})
+  {:event-type        event-type
+   :gatherer-handlers (filterv #(= (:type %) :gatherer) handlers)
+   :action-handlers   (filterv #(= (:type %) :action) handlers)})
 
 (defn act [act-handler]
   {:type    :action
    :handler act-handler})
 
-(defn contextualise [contextualise-handler]
-  {:type    :contextualiser
-   :handler contextualise-handler})
+(defn gather [gather-handler]
+  {:type    :gatherer
+   :handler gather-handler})
 
-(defn plan [& {:keys [contextualisers actions]
-               :or   {contextualisers []
-                      actions         []}}]
-  {:contextualisers contextualisers
-   :actions         actions})
+(defn plan [& {:keys [gatherers actions]
+               :or   {gatherers []
+                      actions   []}}]
+  {:gatherers gatherers
+   :actions   actions})
 
 (defn- rule->plan [event context]
   (fn [rule]
-    (let [contextualisers
+    (let [gatherers
           (resolve-handlers
-            rule :contextualiser-handlers
+            rule :gatherer-handlers
             event context)
 
           actions
@@ -78,7 +78,7 @@
             rule :action-handlers
             event context)]
       (plan
-        :contextualisers contextualisers
+        :gatherers gatherers
         :actions actions))))
 
 (defn- rule-for-event? [event options]
@@ -100,12 +100,20 @@
 (defn execute-action [action context]
   (execute action context))
 
+(defn execute-gatherers [gatherers context]
+  (reduce
+    (fn [accumulated-context gatherer]
+      (add-context-to gatherer accumulated-context))
+    context
+    gatherers))
+
 (defn execute-plan [plan context]
-  (mapv #(execute-action % context) (:actions plan)))
+  (let [full-context
+        (execute-gatherers (:gatherers plan) context)]
+    (mapv #(execute-action % full-context) (:actions plan))))
 
 (defn execute-plans [plans context]
-  (mapv #(
-           execute-plan % context) plans))
+  (mapv #(execute-plan % context) plans))
 
 (defn react-to [ruleset event context]
   (let [plans (determine-plans ruleset event context)]
