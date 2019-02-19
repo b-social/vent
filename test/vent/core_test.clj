@@ -62,7 +62,7 @@
 
 (deftest generates-action-when-event-matched
   (let [ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/from :some-event-channel
             (v/on :some-event-type
               (v/act (capture-as :some-action)))))
@@ -79,7 +79,7 @@
         context {:thing "thing"}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :actions [(capturing-action
                           :identifier :some-action
                           :event event
@@ -88,7 +88,7 @@
 
 (deftest allows-multiple-actions-for-the-same-event
   (let [ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/from :some-event-channel
             (v/on :some-event-type
               (v/act (capture-as :action-1))
@@ -106,7 +106,7 @@
         context {}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :actions [(capturing-action
                           :identifier :action-1
                           :event event
@@ -119,7 +119,7 @@
 
 (deftest correctly-determines-actions-when-many-event-types-are-defined
   (let [ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/from :some-event-channel
             (v/on :some-event-type
               (v/act (capture-as :some-action)))
@@ -138,7 +138,7 @@
         context {}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :actions [(capturing-action
                           :identifier :other-action
                           :event event
@@ -147,7 +147,7 @@
 
 (deftest correctly-determines-actions-when-many-event-channels-are-defined
   (let [ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/from :first-event-channel
             (v/on :some-event-type
               (v/act (capture-as :first-channel-action))))
@@ -166,7 +166,7 @@
         context {}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :actions [(capturing-action
                           :identifier :second-channel-action
                           :event event
@@ -175,7 +175,7 @@
 
 (deftest allows-event-type-lookup-function-to-be-overridden
   (let [ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/options
             :event-type-fn (vhal/event-type-property :type))
 
@@ -200,7 +200,7 @@
         context {}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :actions [(capturing-action
                           :identifier :second-channel-action
                           :event event
@@ -209,7 +209,7 @@
 
 (deftest allows-event-channel-lookup-function-to-be-overridden
   (let [ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/options
             :event-channel-fn (fn [event] (keyword (:topic event))))
 
@@ -232,7 +232,7 @@
         context {}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :actions [(capturing-action
                           :identifier :second-channel-action
                           :event event
@@ -246,7 +246,7 @@
                        :third  4}
 
         ruleset
-        (v/ruleset
+        (v/create-ruleset
           (v/from :event-channel
             (v/on :event-type
               (v/gather (add-from-map extra-context))
@@ -262,7 +262,7 @@
          :payload event-payload}
 
         plans (v/determine-plans ruleset event context)]
-    (is (= [(v/plan
+    (is (= [(v/create-plan
               :gatherers [(merging-gatherer
                             :context-to-merge extra-context)]
               :actions [(capturing-action
@@ -275,7 +275,7 @@
   (fakes/with-fakes
     (let [fake (fakes/recorded-fake [[fakes/any] "some-result"])
           action (fake-action :fake fake)
-          plan (v/plan :actions [action])
+          plan (v/create-plan :actions [action])
           context {:important :value}
 
           result (v/execute-plan plan context)]
@@ -292,8 +292,8 @@
           action2 (fake-action :fake fake2)
           action3 (fake-action :fake fake3)
 
-          plan1 (v/plan :actions [action1 action2])
-          plan2 (v/plan :actions [action3])
+          plan1 (v/create-plan :actions [action1 action2])
+          plan2 (v/create-plan :actions [action3])
 
           context {:important :value}
 
@@ -319,7 +319,7 @@
                       :context-to-merge {:third  :overwritten
                                          :fourth :new})
 
-          plan (v/plan
+          plan (v/create-plan
                  :gatherers [gatherer1 gatherer2]
                  :actions [action1 action2])
 
@@ -351,7 +351,7 @@
 
           gatherer1 (recording-gatherer :fake fake3)
 
-          plan (v/plan
+          plan (v/create-plan
                  :gatherers [gatherer1]
                  :actions [action1 action2])
 

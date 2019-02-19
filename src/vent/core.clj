@@ -34,12 +34,18 @@
 (defn- resolve-handlers [rule handlers-key event context]
   (map #((:handler %) event context) (handlers-key rule)))
 
-(defn ruleset [& fragments]
+(defn create-ruleset [& fragments]
   (let [options (collect-from fragments :options
                   :defaults {:event-channel-fn default-event-channel-fn
                              :event-type-fn    default-event-type-fn})
         rules (collect-from fragments :rules)]
     (merge options rules)))
+
+(defn create-plan [& {:keys [gatherers actions]
+                      :or   {gatherers []
+                             actions   []}}]
+  {:gatherers gatherers
+   :actions   actions})
 
 (defn options [& {:as options}]
   {:options options})
@@ -60,12 +66,6 @@
   {:type    :gatherer
    :handler gather-handler})
 
-(defn plan [& {:keys [gatherers actions]
-               :or   {gatherers []
-                      actions   []}}]
-  {:gatherers gatherers
-   :actions   actions})
-
 (defn- rule->plan [event context]
   (fn [rule]
     (let [gatherers
@@ -77,7 +77,7 @@
           (resolve-handlers
             rule :action-handlers
             event context)]
-      (plan
+      (create-plan
         :gatherers gatherers
         :actions actions))))
 
