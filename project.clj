@@ -3,8 +3,6 @@
   :url "https://github.com/b-social/vent"
   :license {:name "The MIT License"
             :url  "https://opensource.org/licenses/MIT"}
-  :deploy-repositories [["releases" {:url   "https://clojars.org/repo/"
-                                     :creds :gpg}]]
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [halboy "4.0.1"]]
   :plugins [[lein-eftest "0.5.3"]]
