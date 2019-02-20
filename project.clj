@@ -11,4 +11,6 @@
                                      [eftest "0.5.3"]]}
              :dev    [:shared]
              :test   [:shared]}
-  :eftest {:multithread? false})
+  :eftest {:multithread? false}
+  :deploy-repositories {"releases" {:url "https://repo.clojars.org"
+                                    :creds :gpg}})
