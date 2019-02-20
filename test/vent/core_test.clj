@@ -271,6 +271,31 @@
                           :context context)])]
           plans))))
 
+(v/defruleset all
+  (v/from :event-channel
+    (v/on :event-type
+      (v/act (capture-as :action)))))
+
+(deftest allows-ruleset-to-be-defined-in-a-namespace
+  (let [event-channel "event-channel"
+        event-payload
+        {:type    "event-type"
+         :message "The message"}
+
+        event
+        {:channel event-channel
+         :payload event-payload}
+
+        context {}
+
+        plans (v/determine-plans all event context)]
+    (is (= [(v/create-plan
+              :actions [(capturing-action
+                          :identifier :action
+                          :event event
+                          :context context)])]
+          plans))))
+
 (deftest executes-the-action-in-the-plan-with-the-provided-context
   (fakes/with-fakes
     (let [fake (fakes/recorded-fake [[fakes/any] "some-result"])

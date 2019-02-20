@@ -41,6 +41,10 @@
         rules (collect-from fragments :rules)]
     (merge options rules)))
 
+(defmacro defruleset [name & forms]
+  `(def ~name
+     (create-ruleset ~@forms)))
+
 (defn create-plan [& {:keys [gatherers actions]
                       :or   {gatherers []
                              actions   []}}]
