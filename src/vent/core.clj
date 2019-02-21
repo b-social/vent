@@ -48,8 +48,8 @@
 (defn create-plan [& {:keys [gatherers actions]
                       :or   {gatherers []
                              actions   []}}]
-  {:gatherers gatherers
-   :actions   actions})
+  {:gatherers (into [] gatherers)
+   :actions   (into [] actions)})
 
 (defn options [& {:as options}]
   {:options options})
