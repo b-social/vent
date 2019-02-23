@@ -1,12 +1,29 @@
 (ns vent.core
   (:require
-    [clojure.core.protocols]))
+    [vent.util :refer [invoke-highest-arity]]))
 
 (defprotocol Action
   (execute [this context]))
 
 (defprotocol Gatherer
   (add-context-to [this context]))
+
+(defrecord MergingFunctionBackedGatherer [f]
+  Gatherer
+  (add-context-to [_ context]
+    (let [additional (invoke-highest-arity f context)]
+      (merge context additional))))
+
+(defmacro gatherer [bindings & rest]
+  `(->MergingFunctionBackedGatherer (fn ~bindings ~@rest)))
+
+(defrecord FunctionBackedAction [f]
+  Action
+  (execute [_ context]
+    (invoke-highest-arity f context)))
+
+(defmacro action [bindings & rest]
+  `(->FunctionBackedAction (fn ~bindings ~@rest)))
 
 (def ^:private default-event-type-fn
   (fn [event] (keyword (get-in event [:payload :type]))))
@@ -32,7 +49,9 @@
     rule))
 
 (defn- resolve-handlers [rule handlers-key event context]
-  (map #((:handler %) event context) (handlers-key rule)))
+  (map
+    #(invoke-highest-arity (:handler %) event context)
+    (handlers-key rule)))
 
 (defn create-ruleset [& fragments]
   (let [options (collect-from fragments :options
