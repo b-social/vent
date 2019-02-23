@@ -32,7 +32,11 @@
   (let [highest-arity (highest-arity-of f)]
     (cond
       (= highest-arity :variadic) (apply f args)
-      (= highest-arity 2) (apply f args)
-      (= highest-arity 1) (apply f (take 1 args))
       (= highest-arity 0) (f)
-      :else (apply f args))))
+      :else (apply f (take highest-arity args)))))
+
+(defn deep-merge
+  [a b]
+  (if (map? a)
+    (into a (for [[k v] b] [k (deep-merge (a k) v)]))
+    b))

@@ -1,6 +1,8 @@
 (ns vent.core
   (:require
-    [vent.util :refer [invoke-highest-arity]]))
+    [vent.util
+     :refer [invoke-highest-arity
+             deep-merge]]))
 
 (defprotocol Action
   (execute [this context]))
@@ -8,14 +10,16 @@
 (defprotocol Gatherer
   (add-context-to [this context]))
 
-(defrecord MergingFunctionBackedGatherer [f]
+(defrecord MergingFunctionBackedGatherer [f merger]
   Gatherer
   (add-context-to [_ context]
-    (let [additional (invoke-highest-arity f context)]
-      (merge context additional))))
+    (let [merger (or merger deep-merge)
+          additional (invoke-highest-arity f context)]
+      (merger context additional))))
 
 (defmacro gatherer [bindings & rest]
-  `(->MergingFunctionBackedGatherer (fn ~bindings ~@rest)))
+  `(map->MergingFunctionBackedGatherer
+     {:f (fn ~bindings ~@rest)}))
 
 (defrecord FunctionBackedAction [f]
   Action

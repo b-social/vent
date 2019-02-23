@@ -311,14 +311,14 @@
 
         gather-handler (fn [event context]
                          (v/gatherer []
-                           {:first (* (:first context) 2)
+                           {:first  (* (:first context) 2)
                             :second (get-in event [:payload :message])}))
 
         gatherer (gather-handler event context)]
     (is (= (v/add-context-to gatherer context)
-          {:first 2
+          {:first  2
            :second "The message"
-           :other 8}))))
+           :other  8}))))
 
 (deftest allows-gatherers-to-be-defined-simply-with-context-arg
   (let [context {:first 1
@@ -335,14 +335,14 @@
 
         gather-handler (fn [event _]
                          (v/gatherer [context]
-                           {:first (* (:first context) 2)
+                           {:first  (* (:first context) 2)
                             :second (get-in event [:payload :message])}))
 
         gatherer (gather-handler event context)]
     (is (= (v/add-context-to gatherer context)
-          {:first 2
+          {:first  2
            :second "The message"
-           :other 8}))))
+           :other  8}))))
 
 (deftest supports-gather-handlers-accepting-only-event-arg
   (fakes/with-fakes
@@ -380,6 +380,50 @@
       (is (fakes/was-called-once
             fake [{:first  2
                    :second "The message"
+                   :other  8}])))))
+
+(deftest deep-merges-the-results-of-many-gatherers
+  (fakes/with-fakes
+    (let [context {:parent1 {:child1 1 :child2 2}
+                   :other  8}
+
+          fake (fakes/recorded-fake [[fakes/any] "some-result"])
+          action-handler (fn [_ _]
+                           (fake-action :fake fake))
+
+          event-channel "event-channel"
+          event-payload
+          {:type    "event-type"
+           :message "The message"}
+
+          event
+          {:channel event-channel
+           :payload event-payload}
+
+          gather-handler1
+          (fn []
+            (v/gatherer []
+              {:parent1  {:child1 10}
+               :parent2 {:child1 5 :child2 6}}))
+          gather-handler2
+          (fn []
+            (v/gatherer []
+              {:parent2 {:child1 8 :child3 10}}))
+
+          ruleset
+          (v/create-ruleset
+            (v/from :event-channel
+              (v/on :event-type
+                (v/gather gather-handler1)
+                (v/gather gather-handler2)
+                (v/act action-handler))))
+
+          plans (v/determine-plans ruleset event context)
+
+          _ (v/execute-plans plans context)]
+      (is (fakes/was-called-once
+            fake [{:parent1 {:child1 10 :child2 2}
+                   :parent2 {:child1 8 :child2 6 :child3 10}
                    :other  8}])))))
 
 (deftest allows-actions-to-be-defined-simply-with-no-args
