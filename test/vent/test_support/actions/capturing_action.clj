@@ -2,7 +2,7 @@
   (:require
     [vent.core :as v]))
 
-(defrecord CapturingAction [identifier event context]
+(defrecord CapturingAction [identifier event initial-context]
   v/Action
   (execute [_ _]))
 
@@ -14,4 +14,4 @@
     (capturing-action
       :identifier identifier
       :event event
-      :context context)))
+      :initial-context context)))

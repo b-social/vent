@@ -4,6 +4,7 @@
   :license {:name "The MIT License"
             :url  "https://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.10.0"]
+                 [medley "1.0.0"]
                  [halboy "4.0.1"]]
   :plugins [[lein-eftest "0.5.3"]]
   :profiles {:shared {:dependencies [[faker "0.3.2"]

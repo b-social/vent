@@ -1,8 +1,12 @@
 (ns vent.core
   (:require
+    [medley.core :refer [find-first]]
+
     [vent.util
      :refer [invoke-highest-arity
              deep-merge]]))
+
+(declare rule->plan)
 
 (defprotocol Action
   (execute [this context]))
@@ -32,6 +36,14 @@
 (defmacro action [bindings & rest]
   `(->FunctionBackedAction (fn ~bindings ~@rest)))
 
+(defrecord FunctionBackedSelector [f]
+  Selector
+  (selects? [_ context]
+    (invoke-highest-arity f context)))
+
+(defmacro selector [bindings & rest]
+  `(->FunctionBackedSelector (fn ~bindings ~@rest)))
+
 (def ^:private default-event-type-fn
   (fn [event] (keyword (get-in event [:payload :type]))))
 (def ^:private default-event-channel-fn
@@ -57,10 +69,23 @@
 
 (defn- resolve-steps [handlers event context]
   (map
-    (fn [handler]
-      {:type           (:type handler)
-       :implementation (invoke-highest-arity
-                         (:handler handler) event context)})
+    (fn [{:keys [type] :as handler}]
+      (cond
+        (#{:action :gatherer} type)
+        {:type           type
+         :implementation (invoke-highest-arity
+                           (:handler handler) event context)}
+
+        (= :choice type)
+        {:type
+         type
+
+         :options
+         (mapv (fn [option]
+                 {:selector (invoke-highest-arity
+                              (:selector option) event context)
+                  :plan     ((rule->plan event context) option)})
+           (:options handler))}))
     handlers))
 
 (defn create-ruleset [& fragments]
@@ -91,8 +116,9 @@
   {:type    :choice
    :options options})
 
-(defn option [& handlers]
+(defn option [selector & handlers]
   {:type     :option
+   :selector selector
    :handlers handlers})
 
 (defn act [act-handler]
@@ -126,7 +152,8 @@
 
 (defn execute-plan [plan context]
   (reduce
-    (fn [{:keys [context] :as accumulator} {:keys [type implementation]}]
+    (fn [{:keys [context] :as accumulator}
+         {:keys [type implementation options]}]
       (cond
         (= type :gatherer)
         (assoc accumulator
@@ -134,8 +161,18 @@
 
         (= type :action)
         (update-in accumulator
-          [:outputs] conj (execute implementation context))))
-    {:context context :outputs []}
+          [:outputs] conj (execute implementation context))
+
+        (= type :choice)
+        (if-let [selected-option
+                 (find-first
+                   (fn [option] (selects? (:selector option) context))
+                   options)]
+          (update-in accumulator
+            [:nested] conj (execute-plan
+                             (:plan selected-option) context))
+          accumulator)))
+    {:context context :outputs [] :nested []}
     (:steps plan)))
 
 (defn execute-plans [plans context]

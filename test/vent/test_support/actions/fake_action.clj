@@ -8,3 +8,7 @@
 
 (defn fake-action [& {:as options}]
   (map->FakeAction options))
+
+(defn invoke-fake [fake]
+  (fn [_ _]
+    (fake-action :fake fake)))
