@@ -10,6 +10,9 @@
 (defprotocol Gatherer
   (add-context-to [this context]))
 
+(defprotocol Selector
+  (selects? [this context]))
+
 (defrecord MergingFunctionBackedGatherer [f merger]
   Gatherer
   (add-context-to [_ context]
@@ -52,10 +55,13 @@
     (= (:event-type rule) (event-type-fn event))
     rule))
 
-(defn- resolve-handlers [rule handlers-key event context]
+(defn- resolve-steps [handlers event context]
   (map
-    #(invoke-highest-arity (:handler %) event context)
-    (handlers-key rule)))
+    (fn [handler]
+      {:type           (:type handler)
+       :implementation (invoke-highest-arity
+                         (:handler handler) event context)})
+    handlers))
 
 (defn create-ruleset [& fragments]
   (let [options (collect-from fragments :options
@@ -68,11 +74,8 @@
   `(def ~name
      (create-ruleset ~@forms)))
 
-(defn create-plan [& {:keys [gatherers actions]
-                      :or   {gatherers []
-                             actions   []}}]
-  {:gatherers (into [] gatherers)
-   :actions   (into [] actions)})
+(defn create-plan [& {:keys [steps] :or {steps []}}]
+  {:steps (into [] steps)})
 
 (defn options [& {:as options}]
   {:options options})
@@ -81,9 +84,16 @@
   {:rules {(keyword channel) event-rules}})
 
 (defn on [event-type & handlers]
-  {:event-type        event-type
-   :gatherer-handlers (filterv #(= (:type %) :gatherer) handlers)
-   :action-handlers   (filterv #(= (:type %) :action) handlers)})
+  {:event-type event-type
+   :handlers   handlers})
+
+(defn choose [& options]
+  {:type    :choice
+   :options options})
+
+(defn option [& handlers]
+  {:type     :option
+   :handlers handlers})
 
 (defn act [act-handler]
   {:type    :action
@@ -95,18 +105,8 @@
 
 (defn- rule->plan [event context]
   (fn [rule]
-    (let [gatherers
-          (resolve-handlers
-            rule :gatherer-handlers
-            event context)
-
-          actions
-          (resolve-handlers
-            rule :action-handlers
-            event context)]
-      (create-plan
-        :gatherers gatherers
-        :actions actions))))
+    (let [steps (resolve-steps (:handlers rule) event context)]
+      (create-plan :steps steps))))
 
 (defn- rule-for-event? [event options]
   (fn [rule] (return-on-match rule event options)))
@@ -124,20 +124,19 @@
         (mapv (rule->plan event context) event-rules)]
     event-plans))
 
-(defn execute-action [action context]
-  (execute action context))
-
-(defn execute-gatherers [gatherers context]
-  (reduce
-    (fn [accumulated-context gatherer]
-      (add-context-to gatherer accumulated-context))
-    context
-    gatherers))
-
 (defn execute-plan [plan context]
-  (let [full-context
-        (execute-gatherers (:gatherers plan) context)]
-    (mapv #(execute-action % full-context) (:actions plan))))
+  (reduce
+    (fn [{:keys [context] :as accumulator} {:keys [type implementation]}]
+      (cond
+        (= type :gatherer)
+        (assoc accumulator
+          :context (add-context-to implementation context))
+
+        (= type :action)
+        (update-in accumulator
+          [:outputs] conj (execute implementation context))))
+    {:context context :outputs []}
+    (:steps plan)))
 
 (defn execute-plans [plans context]
   (mapv #(execute-plan % context) plans))

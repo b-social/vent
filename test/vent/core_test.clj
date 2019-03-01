@@ -9,56 +9,20 @@
     [vent.test-support.data :as data]
 
     [vent.core :as v]
-    [vent.hal :as vhal]))
+    [vent.hal :as vhal]
 
-(defrecord CapturingAction [identifier event context]
-  v/Action
-  (execute [_ _]))
-
-(defn capturing-action [& {:as options}]
-  (map->CapturingAction options))
-
-(defn capture-as [identifier]
-  (fn [event context]
-    (capturing-action
-      :identifier identifier
-      :event event
-      :context context)))
-
-(defrecord FakeAction [fake]
-  v/Action
-  (execute [_ context]
-    (fake context)))
-
-(defn fake-action [& {:as options}]
-  (map->FakeAction options))
-
-(defrecord MergingGatherer [context-to-merge]
-  v/Gatherer
-  (add-context-to [_ context]
-    (merge context context-to-merge)))
-
-(defn merging-gatherer [& {:as options}]
-  (map->MergingGatherer options))
-
-(defn add-from-map [extra-context]
-  (fn [_ _]
-    (merging-gatherer
-      :context-to-merge extra-context)))
-
-(defrecord RecordingGatherer [fake]
-  v/Gatherer
-  (add-context-to [_ context]
-    (do
-      (fake context)
-      context)))
-
-(defn recording-gatherer [& {:as options}]
-  (map->RecordingGatherer options))
-
-(defn record-call [fake]
-  (fn [_ _]
-    (recording-gatherer :fake fake)))
+    [vent.test-support.actions.capturing-action
+     :refer [capture-as capturing-action]]
+    [vent.test-support.actions.fake-action
+     :refer [fake-action]]
+    [vent.test-support.gatherers.merging-gatherer
+     :refer [add-from-map merging-gatherer]]
+    [vent.test-support.gatherers.recording-gatherer
+     :refer [recording-gatherer]]
+    [vent.test-support.selectors.greater-than-selector
+     :refer [greater-than]]
+    [vent.test-support.selectors.less-than-selector
+     :refer [less-than]]))
 
 (deftest generates-action-when-event-matched
   (let [ruleset
@@ -80,10 +44,11 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :some-action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest allows-multiple-actions-for-the-same-event
@@ -107,14 +72,16 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :action-1
-                          :event event
-                          :context context)
-                        (capturing-action
-                          :identifier :action-2
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :action-1
+                                         :event event
+                                         :context context)}
+                      {:type           :action
+                       :implementation (capturing-action
+                                         :identifier :action-2
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest correctly-determines-actions-when-many-event-types-are-defined
@@ -139,10 +106,11 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :other-action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :other-action
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest correctly-determines-actions-when-many-event-channels-are-defined
@@ -167,10 +135,11 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :second-channel-action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :second-channel-action
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest allows-event-type-lookup-function-to-be-overridden
@@ -201,10 +170,11 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :second-channel-action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :second-channel-action
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest allows-event-channel-lookup-function-to-be-overridden
@@ -233,10 +203,11 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :second-channel-action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :second-channel-action
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest allows-event-specific-context-to-be-generated
@@ -263,13 +234,40 @@
 
         plans (v/determine-plans ruleset event context)]
     (is (= [(v/create-plan
-              :gatherers [(merging-gatherer
-                            :context-to-merge extra-context)]
-              :actions [(capturing-action
-                          :identifier :action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :gatherer
+                       :implementation (merging-gatherer
+                                         :context-to-merge extra-context)}
+                      {:type           :action
+                       :implementation (capturing-action
+                                         :identifier :action
+                                         :event event
+                                         :context context)}])]
           plans))))
+
+#_(deftest allows-different-paths-to-be-chosen-based-on-event-and-context
+    (let [event-channel "event-channel"
+          event-payload
+          {:type   "event-type"
+           :amount 20}
+
+          event
+          {:channel event-channel
+           :payload event-payload}
+
+          context {:some :context}
+
+          ruleset
+          (v/create-ruleset
+            (v/from :event-channel
+              (v/on :event-type
+                (v/choose
+                  (v/option (greater-than :amount 50)
+                    (v/act (capture-as :greater-than)))
+                  (v/option (less-than :amount 50)
+                    (v/act (capture-as :less-than)))))))
+
+          plans (v/determine-plans ruleset event context)]
+      (is (= (v/create-plan)))))
 
 (v/defruleset all
   (v/from :event-channel
@@ -290,10 +288,11 @@
 
         plans (v/determine-plans all event context)]
     (is (= [(v/create-plan
-              :actions [(capturing-action
-                          :identifier :action
-                          :event event
-                          :context context)])]
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :action
+                                         :event event
+                                         :context context)}])]
           plans))))
 
 (deftest allows-gatherers-to-be-defined-simply-with-no-args
@@ -385,7 +384,7 @@
 (deftest deep-merges-the-results-of-many-gatherers
   (fakes/with-fakes
     (let [context {:parent1 {:child1 1 :child2 2}
-                   :other  8}
+                   :other   8}
 
           fake (fakes/recorded-fake [[fakes/any] "some-result"])
           action-handler (fn [_ _]
@@ -403,7 +402,7 @@
           gather-handler1
           (fn []
             (v/gatherer []
-              {:parent1  {:child1 10}
+              {:parent1 {:child1 10}
                :parent2 {:child1 5 :child2 6}}))
           gather-handler2
           (fn []
@@ -424,7 +423,7 @@
       (is (fakes/was-called-once
             fake [{:parent1 {:child1 10 :child2 2}
                    :parent2 {:child1 8 :child2 6 :child3 10}
-                   :other  8}])))))
+                   :other   8}])))))
 
 (deftest allows-actions-to-be-defined-simply-with-no-args
   (fakes/with-fakes
@@ -512,12 +511,14 @@
   (fakes/with-fakes
     (let [fake (fakes/recorded-fake [[fakes/any] "some-result"])
           action (fake-action :fake fake)
-          plan (v/create-plan :actions [action])
+          plan (v/create-plan :steps [{:type           :action
+                                       :implementation action}])
           context {:important :value}
 
           result (v/execute-plan plan context)]
       (is (fakes/was-called-once fake [context]))
-      (is (= result ["some-result"])))))
+      (is (= result {:context context
+                     :outputs ["some-result"]})))))
 
 (deftest executes-the-actions-in-all-plans-with-the-provided-context
   (fakes/with-fakes
@@ -529,8 +530,12 @@
           action2 (fake-action :fake fake2)
           action3 (fake-action :fake fake3)
 
-          plan1 (v/create-plan :actions [action1 action2])
-          plan2 (v/create-plan :actions [action3])
+          plan1 (v/create-plan :steps [{:type           :action
+                                        :implementation action1}
+                                       {:type           :action
+                                        :implementation action2}])
+          plan2 (v/create-plan :steps [{:type           :action
+                                        :implementation action3}])
 
           context {:important :value}
 
@@ -538,8 +543,10 @@
       (is (fakes/was-called-once fake1 [context]))
       (is (fakes/was-called-once fake2 [context]))
       (is (fakes/was-called-once fake3 [context]))
-      (is (= results [["first-first-result" "first-second-result"]
-                      ["second-first-result"]])))))
+      (is (= results [{:context context
+                       :outputs ["first-first-result" "first-second-result"]}
+                      {:context context
+                       :outputs ["second-first-result"]}])))))
 
 (deftest executes-gatherers-before-actions-and-passes-additional-context
   (fakes/with-fakes
@@ -557,8 +564,14 @@
                                          :fourth :new})
 
           plan (v/create-plan
-                 :gatherers [gatherer1 gatherer2]
-                 :actions [action1 action2])
+                 :steps [{:type           :gatherer
+                          :implementation gatherer1}
+                         {:type           :gatherer
+                          :implementation gatherer2}
+                         {:type           :action
+                          :implementation action1}
+                         {:type           :action
+                          :implementation action2}])
 
           context {:first  :initial
                    :second :overwrite-me}
@@ -572,7 +585,11 @@
                                          :second :updated
                                          :third  :overwritten
                                          :fourth :new}]))
-      (is (= results ["first-result" "second-result"])))))
+      (is (= results {:context {:first  :initial
+                                :second :updated
+                                :third  :overwritten
+                                :fourth :new}
+                      :outputs ["first-result" "second-result"]})))))
 
 (deftest executes-gatherers-once-only
   (fakes/with-fakes
@@ -589,11 +606,16 @@
           gatherer1 (recording-gatherer :fake fake3)
 
           plan (v/create-plan
-                 :gatherers [gatherer1]
-                 :actions [action1 action2])
+                 :steps [{:type           :gatherer
+                          :implementation gatherer1}
+                         {:type           :action
+                          :implementation action1}
+                         {:type           :action
+                          :implementation action2}])
 
           results (v/execute-plan plan context)]
       (is (fakes/was-called-once fake1 [context]))
       (is (fakes/was-called-once fake2 [context]))
       (is (fakes/was-called-once fake3 [context]))
-      (is (= results ["first-result" "second-result"])))))
+      (is (= results {:context context
+                      :outputs ["first-result" "second-result"]})))))
