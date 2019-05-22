@@ -1,4 +1,4 @@
-(defproject b-social/vent "0.6.0"
+(defproject b-social/vent "0.6.1-SNAPSHOT"
   :description "Rule based event processing engine."
   :url "https://github.com/b-social/vent"
   :license {:name "The MIT License"
