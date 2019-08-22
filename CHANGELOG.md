@@ -4,6 +4,8 @@ change log follows the conventions of
 [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+
+## [0.6.2] — 2019-08-22
 ### Added
 - Codox
 
@@ -16,4 +18,5 @@ change log follows the conventions of
 
 [0.6.0]: https://github.com/your-name/vent/compare/0.1.0...0.6.0
 [0.6.1]: https://github.com/your-name/vent/compare/0.6.0...0.6.1
-[Unreleased]: https://github.com/your-name/vent/compare/0.6.1...HEAD
+[0.6.2]: https://github.com/your-name/vent/compare/0.6.1...0.6.2
+[Unreleased]: https://github.com/your-name/vent/compare/0.6.2...HEAD
