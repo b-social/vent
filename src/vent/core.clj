@@ -62,10 +62,10 @@
          extracted {key (merge-over (mapv key relevant))}]
      extracted)))
 
-(defn- return-on-match [rule event {:keys [event-type-fn]}]
-  (and
-    (= (:event-type rule) (event-type-fn event))
-    rule))
+(defn- return-on-match [rule event options]
+  (let [rule-matching-fn (:rule-matching-fn rule)]
+    (when (invoke-highest-arity rule-matching-fn event options)
+      rule)))
 
 (defn- resolve-steps [handlers event context]
   (map
@@ -108,9 +108,18 @@
 (defn from [channel & event-rules]
   {:rules {(keyword channel) event-rules}})
 
+(defn on [rule-matching-fn & handlers]
+  {:rule-matching-fn rule-matching-fn
+   :handlers         handlers})
+
 (defn on-type [event-type & handlers]
-  {:event-type event-type
-   :handlers   handlers})
+  {:rule-matching-fn (fn [event {:keys [event-type-fn]}]
+                       (= event-type (event-type-fn event)))
+   :handlers         handlers})
+
+(defn on-every [handlers]
+  {:rule-matching-fn (constantly true)
+   :handlers         handlers})
 
 (defn choose [& options]
   {:type    :choice

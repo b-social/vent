@@ -14,5 +14,12 @@
 (defn random-url
   ([] (random-url (random-uuid)))
   ([id]
-    (let [words (take 2 (lorem/words))]
-      (format url-template (first words) (last words) id))))
+   (let [words (take 2 (lorem/words))]
+     (format url-template (first words) (last words) id))))
+
+(defn random-payload
+  ([] (random-payload {}))
+  ([overrides]
+   (merge
+     (into {} [[(random-uuid) (random-uuid)] [(random-uuid) (random-uuid)]])
+     overrides)))
