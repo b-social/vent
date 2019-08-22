@@ -28,7 +28,7 @@
   (let [ruleset
         (v/create-ruleset
           (v/from :some-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :some-action)))))
 
         event-channel "some-event-channel"
@@ -55,7 +55,7 @@
   (let [ruleset
         (v/create-ruleset
           (v/from :some-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :action-1))
               (v/act (capture-as :action-2)))))
 
@@ -88,9 +88,9 @@
   (let [ruleset
         (v/create-ruleset
           (v/from :some-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :some-action)))
-            (v/on :other-event-type
+            (v/on-type :other-event-type
               (v/act (capture-as :other-action)))))
 
         event-channel "some-event-channel"
@@ -117,10 +117,10 @@
   (let [ruleset
         (v/create-ruleset
           (v/from :first-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :first-channel-action))))
           (v/from :second-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :second-channel-action)))))
 
         event-channel "second-event-channel"
@@ -149,10 +149,10 @@
             :event-type-fn (vent-hal/event-type-property :type))
 
           (v/from :first-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :first-channel-action))))
           (v/from :second-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :second-channel-action)))))
 
         event-channel "second-event-channel"
@@ -184,10 +184,10 @@
             :event-channel-fn (fn [event] (keyword (:topic event))))
 
           (v/from :first-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :first-channel-action))))
           (v/from :second-event-channel
-            (v/on :some-event-type
+            (v/on-type :some-event-type
               (v/act (capture-as :second-channel-action)))))
 
         event-channel "second-event-channel"
@@ -219,7 +219,7 @@
         ruleset
         (v/create-ruleset
           (v/from :event-channel
-            (v/on :event-type
+            (v/on-type :event-type
               (v/gather (add-from-map extra-context))
               (v/act (capture-as :action)))))
 
@@ -259,7 +259,7 @@
         ruleset
         (v/create-ruleset
           (v/from :event-channel
-            (v/on :event-type
+            (v/on-type :event-type
               (v/choose
                 (v/option (greater-than :amount 50)
                   (v/act (capture-as :greater-than)))
@@ -311,7 +311,7 @@
 
 (v/defruleset all
   (v/from :event-channel
-    (v/on :event-type
+    (v/on-type :event-type
       (v/act (capture-as :action)))))
 
 (deftest allows-ruleset-to-be-defined-in-a-namespace
@@ -409,7 +409,7 @@
           ruleset
           (v/create-ruleset
             (v/from :event-channel
-              (v/on :event-type
+              (v/on-type :event-type
                 (v/gather gather-handler)
                 (v/act action-handler))))
 
@@ -452,7 +452,7 @@
           ruleset
           (v/create-ruleset
             (v/from :event-channel
-              (v/on :event-type
+              (v/on-type :event-type
                 (v/gather gather-handler1)
                 (v/gather gather-handler2)
                 (v/act action-handler))))
@@ -538,7 +538,7 @@
           ruleset
           (v/create-ruleset
             (v/from :event-channel
-              (v/on :event-type
+              (v/on-type :event-type
                 (v/act action-handler))))
 
           plans (v/determine-plans ruleset event context)
@@ -623,7 +623,7 @@
           ruleset
           (v/create-ruleset
             (v/from :event-channel
-              (v/on :event-type
+              (v/on-type :event-type
                 (v/choose
                   (v/option selector-handler
                     (v/act (capture-as :selected)))))))
@@ -771,7 +771,7 @@
 
           ruleset (v/create-ruleset
                     (v/from :event-channel
-                      (v/on :event-type
+                      (v/on-type :event-type
                         (v/choose
                           (v/option (greater-than :amount 30)
                             (v/act (invoke-fake fake1)))

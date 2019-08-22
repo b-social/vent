@@ -108,7 +108,7 @@
 (defn from [channel & event-rules]
   {:rules {(keyword channel) event-rules}})
 
-(defn on [event-type & handlers]
+(defn on-type [event-type & handlers]
   {:event-type event-type
    :handlers   handlers})
 
