@@ -4,6 +4,8 @@ change log follows the conventions of
 [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+### Added
+- Codox
 
 ## [0.6.1] — 2019-08-22
 ### Changed
