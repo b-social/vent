@@ -1,6 +1,7 @@
 (ns vent.core-test
   (:require
     [clojure.test :refer :all]
+    [clojure.string :as string]
 
     [clj-fakes.core :as fakes]
 
@@ -206,6 +207,60 @@
               :steps [{:type           :action
                        :implementation (capturing-action
                                          :identifier :second-channel-action
+                                         :event event
+                                         :initial-context context)}])]
+          plans))))
+
+(deftest allows-matching-events-by-function
+  (let [ruleset
+        (v/create-ruleset
+          (v/from :some-event-channel
+            (v/on (fn [event] (string/includes?
+                                (get-in event [:payload :message])
+                                "important"))
+              (v/act (capture-as :some-action)))))
+
+        event-channel "some-event-channel"
+        event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
+
+        event
+        {:channel event-channel
+         :payload event-payload}
+
+        context {:thing "thing"}
+
+        plans (v/determine-plans ruleset event context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event event
+                                         :initial-context context)}])]
+          plans))))
+
+(deftest allows-matching-on-every-event
+  (let [ruleset
+        (v/create-ruleset
+          (v/from :some-event-channel
+            (v/on-every
+              (v/act (capture-as :some-action)))))
+
+        event-channel "some-event-channel"
+        event-payload (data/random-payload)
+
+        event
+        {:channel event-channel
+         :payload event-payload}
+
+        context {:thing "thing"}
+
+        plans (v/determine-plans ruleset event context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
                                          :event event
                                          :initial-context context)}])]
           plans))))
