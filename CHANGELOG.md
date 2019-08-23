@@ -4,6 +4,8 @@ change log follows the conventions of
 [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+### Changed
+- Renamed `from` to `from-channel` for consistency with `on-type` (breaking).
 
 ## [0.6.3] — 2019-08-22
 ### Added

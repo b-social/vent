@@ -105,8 +105,8 @@
 (defn options [& {:as options}]
   {:options options})
 
-(defn from [channel & event-rules]
-  {:rules {(keyword channel) event-rules}})
+(defn from-channel [event-channel & event-rules]
+  {:rules {(keyword event-channel) event-rules}})
 
 (defn on [rule-matching-fn & handlers]
   {:rule-matching-fn rule-matching-fn

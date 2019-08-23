@@ -28,7 +28,7 @@
 (deftest generates-action-when-event-matched
   (let [ruleset
         (v/create-ruleset
-          (v/from :some-event-channel
+          (v/from-channel :some-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :some-action)))))
 
@@ -55,7 +55,7 @@
 (deftest allows-multiple-actions-for-the-same-event
   (let [ruleset
         (v/create-ruleset
-          (v/from :some-event-channel
+          (v/from-channel :some-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :action-1))
               (v/act (capture-as :action-2)))))
@@ -88,7 +88,7 @@
 (deftest correctly-determines-actions-when-many-event-types-are-defined
   (let [ruleset
         (v/create-ruleset
-          (v/from :some-event-channel
+          (v/from-channel :some-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :some-action)))
             (v/on-type :other-event-type
@@ -117,10 +117,10 @@
 (deftest correctly-determines-actions-when-many-event-channels-are-defined
   (let [ruleset
         (v/create-ruleset
-          (v/from :first-event-channel
+          (v/from-channel :first-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :first-channel-action))))
-          (v/from :second-event-channel
+          (v/from-channel :second-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :second-channel-action)))))
 
@@ -149,10 +149,10 @@
           (v/options
             :event-type-fn (vent-hal/event-type-property :type))
 
-          (v/from :first-event-channel
+          (v/from-channel :first-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :first-channel-action))))
-          (v/from :second-event-channel
+          (v/from-channel :second-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :second-channel-action)))))
 
@@ -184,10 +184,10 @@
           (v/options
             :event-channel-fn (fn [event] (keyword (:topic event))))
 
-          (v/from :first-event-channel
+          (v/from-channel :first-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :first-channel-action))))
-          (v/from :second-event-channel
+          (v/from-channel :second-event-channel
             (v/on-type :some-event-type
               (v/act (capture-as :second-channel-action)))))
 
@@ -214,7 +214,7 @@
 (deftest allows-matching-events-by-function
   (let [ruleset
         (v/create-ruleset
-          (v/from :some-event-channel
+          (v/from-channel :some-event-channel
             (v/on (fn [event] (string/includes?
                                 (get-in event [:payload :message])
                                 "important"))
@@ -243,7 +243,7 @@
 (deftest allows-matching-on-every-event
   (let [ruleset
         (v/create-ruleset
-          (v/from :some-event-channel
+          (v/from-channel :some-event-channel
             (v/on-every
               (v/act (capture-as :some-action)))))
 
@@ -273,7 +273,7 @@
 
         ruleset
         (v/create-ruleset
-          (v/from :event-channel
+          (v/from-channel :event-channel
             (v/on-type :event-type
               (v/gather (add-from-map extra-context))
               (v/act (capture-as :action)))))
@@ -313,7 +313,7 @@
 
         ruleset
         (v/create-ruleset
-          (v/from :event-channel
+          (v/from-channel :event-channel
             (v/on-type :event-type
               (v/choose
                 (v/option (greater-than :amount 50)
@@ -365,7 +365,7 @@
           plans))))
 
 (v/defruleset all
-  (v/from :event-channel
+  (v/from-channel :event-channel
     (v/on-type :event-type
       (v/act (capture-as :action)))))
 
@@ -463,7 +463,7 @@
 
           ruleset
           (v/create-ruleset
-            (v/from :event-channel
+            (v/from-channel :event-channel
               (v/on-type :event-type
                 (v/gather gather-handler)
                 (v/act action-handler))))
@@ -506,7 +506,7 @@
 
           ruleset
           (v/create-ruleset
-            (v/from :event-channel
+            (v/from-channel :event-channel
               (v/on-type :event-type
                 (v/gather gather-handler1)
                 (v/gather gather-handler2)
@@ -592,7 +592,7 @@
 
           ruleset
           (v/create-ruleset
-            (v/from :event-channel
+            (v/from-channel :event-channel
               (v/on-type :event-type
                 (v/act action-handler))))
 
@@ -677,7 +677,7 @@
 
           ruleset
           (v/create-ruleset
-            (v/from :event-channel
+            (v/from-channel :event-channel
               (v/on-type :event-type
                 (v/choose
                   (v/option selector-handler
@@ -825,7 +825,7 @@
           fake3 (fakes/recorded-fake [[fakes/any] "third-result"])
 
           ruleset (v/create-ruleset
-                    (v/from :event-channel
+                    (v/from-channel :event-channel
                       (v/on-type :event-type
                         (v/choose
                           (v/option (greater-than :amount 30)
