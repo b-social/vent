@@ -85,6 +85,49 @@
                                          :initial-context context)}])]
           plans))))
 
+(deftest allows-multiple-channels-for-the-same-action
+  (let [ruleset
+        (v/create-ruleset
+          (v/from-channels
+            [:some-event-channel
+             :second-event-channel]
+            (v/on-type :some-event-type
+              (v/act (capture-as :action-1)))))
+
+        event-channel-1 "some-event-channel"
+        event-channel-2 "second-event-channel"
+
+        event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
+
+        event-1
+        {:channel event-channel-1
+         :payload event-payload}
+
+        event-2
+        {:channel event-channel-2
+         :payload event-payload}
+
+        context {}
+
+        plans-1 (v/determine-plans ruleset event-1 context)
+        plans-2 (v/determine-plans ruleset event-2 context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :action-1
+                                         :event event-1
+                                         :initial-context context)}])]
+          plans-1))
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :action-1
+                                         :event event-2
+                                         :initial-context context)}])]
+          plans-2))))
+
 (deftest correctly-determines-actions-when-many-event-types-are-defined
   (let [ruleset
         (v/create-ruleset

@@ -105,6 +105,12 @@
 (defn options [& {:as options}]
   {:options options})
 
+(defn from-channels [event-channels & event-rules]
+  {:rules
+   (into {}
+     (for [event-channel event-channels]
+       [(keyword event-channel) event-rules]))})
+
 (defn from-channel [event-channel & event-rules]
   {:rules {(keyword event-channel) event-rules}})
 
