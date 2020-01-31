@@ -5,6 +5,8 @@ change log follows the conventions of
 
 ## [Unreleased]
 
+## [0.6.5] — 2020-01-31
+
 ## [0.6.4] — 2019-08-23
 ### Changed
 - Renamed `from` to `from-channel` for consistency with `on-type` (breaking).
@@ -30,4 +32,5 @@ change log follows the conventions of
 [0.6.2]: https://github.com/your-name/vent/compare/0.6.1...0.6.2
 [0.6.3]: https://github.com/your-name/vent/compare/0.6.2...0.6.3
 [0.6.4]: https://github.com/your-name/vent/compare/0.6.3...0.6.4
-[Unreleased]: https://github.com/your-name/vent/compare/0.6.4...HEAD
+[0.6.5]: https://github.com/your-name/vent/compare/0.6.4...0.6.5
+[Unreleased]: https://github.com/your-name/vent/compare/0.6.5...HEAD
