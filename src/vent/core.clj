@@ -4,7 +4,8 @@
 
     [vent.util
      :refer [invoke-highest-arity
-             deep-merge]]))
+             deep-merge]])
+  (:import [java.util Collection]))
 
 (declare rule->plan)
 
@@ -121,6 +122,11 @@
 (defn on-type [event-type & handlers]
   {:rule-matching-fn (fn [event {:keys [event-type-fn]}]
                        (= event-type (event-type-fn event)))
+   :handlers         handlers})
+
+(defn on-types [^Collection event-types & handlers]
+  {:rule-matching-fn (fn [event {:keys [event-type-fn]}]
+                       (.contains event-types (event-type-fn event)))
    :handlers         handlers})
 
 (defn on-every [& handlers]
