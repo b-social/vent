@@ -157,6 +157,50 @@
                                          :initial-context context)}])]
           plans))))
 
+(deftest correctly-matches-on-multiple-types
+  (let [ruleset
+        (v/create-ruleset
+          (v/from-channel :some-event-channel
+            (v/on-types [:other-event-type :some-event-type]
+              (v/act (capture-as :some-action)))))
+
+        event-channel "some-event-channel"
+
+        event-payload-other-event-type
+        {:type    "other-event-type"
+         :message "The message"}
+
+        other-event-type-event
+        {:channel event-channel
+         :payload event-payload-other-event-type}
+
+        event-payload-some-event-type
+        {:type    "some-event-type"
+         :message "The message"}
+
+        some-event-type-event
+        {:channel event-channel
+         :payload event-payload-some-event-type}
+
+        context {}
+
+        other-event-type-plans (v/determine-plans ruleset other-event-type-event context)
+        some-event-type-plans (v/determine-plans ruleset some-event-type-event context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event other-event-type-event
+                                         :initial-context context)}])]
+          other-event-type-plans))
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event some-event-type-event
+                                         :initial-context context)}])]
+          some-event-type-plans))))
+
 (deftest correctly-determines-actions-when-many-event-channels-are-defined
   (let [ruleset
         (v/create-ruleset
