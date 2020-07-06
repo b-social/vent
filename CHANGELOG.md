@@ -5,6 +5,8 @@ change log follows the conventions of
 
 ## [Unreleased]
 
+## [0.6.7] — 2020-07-06
+
 ## [0.6.6] — 2020-07-03
 
 ## [0.6.5] — 2020-01-31
@@ -36,4 +38,5 @@ change log follows the conventions of
 [0.6.4]: https://github.com/your-name/vent/compare/0.6.3...0.6.4
 [0.6.5]: https://github.com/your-name/vent/compare/0.6.4...0.6.5
 [0.6.6]: https://github.com/your-name/vent/compare/0.6.5...0.6.6
-[Unreleased]: https://github.com/your-name/vent/compare/0.6.6...HEAD
+[0.6.7]: https://github.com/your-name/vent/compare/0.6.6...0.6.7
+[Unreleased]: https://github.com/your-name/vent/compare/0.6.7...HEAD
