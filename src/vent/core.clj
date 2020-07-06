@@ -1,11 +1,9 @@
 (ns vent.core
   (:require
     [medley.core :refer [find-first]]
-
     [vent.util
      :refer [invoke-highest-arity
-             deep-merge]])
-  (:import [java.util Collection]))
+             deep-merge]]))
 
 (declare rule->plan)
 
@@ -124,9 +122,10 @@
                        (= event-type (event-type-fn event)))
    :handlers         handlers})
 
-(defn on-types [^Collection event-types & handlers]
+(defn on-types [event-types & handlers]
   {:rule-matching-fn (fn [event {:keys [event-type-fn]}]
-                       (.contains event-types (event-type-fn event)))
+                       (let [event-types (into #{} event-types)]
+                         (event-types (event-type-fn event))))
    :handlers         handlers})
 
 (defn on-every [& handlers]
