@@ -180,8 +180,14 @@
           :context (add-context-to implementation context))
 
         (= type :action)
-        (update-in accumulator
-          [:outputs] conj (execute implementation context))
+        (let [output (execute implementation context)
+              pipe-output? (and
+                             (map? output)
+                             (-> output meta :ignore not))]
+          (-> accumulator
+            (update-in [:outputs] conj output)
+            (merge (when pipe-output?
+                     {:context (deep-merge context output)}))))
 
         (= type :choice)
         (if-let [selected-option

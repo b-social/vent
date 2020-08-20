@@ -820,6 +820,94 @@
                        :outputs ["second-first-result"]
                        :nested  []}])))))
 
+(deftest merges-the-action-output-with-the-context-when-the-output-is-a-map
+  (fakes/with-fakes
+    (let [action-output {:output-key "output value"}
+          fake (fakes/recorded-fake [[fakes/any] action-output])
+          action (fake-action :fake fake)
+          plan (v/create-plan :steps [{:type           :action
+                                       :implementation action}])
+          context {:important :value}
+
+          result (v/execute-plan plan context)]
+      (is (fakes/was-called-once fake [context]))
+      (is (= result {:context (merge context action-output)
+                     :outputs [action-output]
+                     :nested  []})))))
+
+(deftest does-not-modify-the-context-when-the-output-is-NOT-a-map
+  (fakes/with-fakes
+    (let [action-output "important result"
+          fake (fakes/recorded-fake [[fakes/any] action-output])
+          action (fake-action :fake fake)
+          plan (v/create-plan :steps [{:type           :action
+                                       :implementation action}])
+          context {:important :value}
+
+          result (v/execute-plan plan context)]
+      (is (fakes/was-called-once fake [context]))
+      (is (= result {:context context
+                     :outputs [action-output]
+                     :nested  []})))))
+
+(deftest does-not-modify-the-context-when-output-map-has-ignored-metadata
+  (fakes/with-fakes
+    (let [action-output ^:ignore {:output-key "output value"}
+          fake (fakes/recorded-fake [[fakes/any] action-output])
+          action (fake-action :fake fake)
+          plan (v/create-plan :steps [{:type           :action
+                                       :implementation action}])
+          context {:important :value}
+
+          result (v/execute-plan plan context)]
+      (is (fakes/was-called-once fake [context]))
+      (is (= result {:context context
+                     :outputs [action-output]
+                     :nested  []})))))
+
+(deftest executes-actions-and-propagates-additional-context-as-expected
+  (fakes/with-fakes
+    (let [action-output1 {:a "1"}
+          action-output2 {:a "2" :b "2"}
+          action-output3 ^:ignore {:a "3" :b "3" :c "3"}
+          action-output4 {:b "4"}
+
+          fake1 (fakes/recorded-fake [[fakes/any] action-output1])
+          fake2 (fakes/recorded-fake [[fakes/any] action-output2])
+          fake3 (fakes/recorded-fake [[fakes/any] action-output3])
+          fake4 (fakes/recorded-fake [[fakes/any] action-output4])
+
+          action1 (fake-action :fake fake1)
+          action2 (fake-action :fake fake2)
+          action3 (fake-action :fake fake3)
+          action4 (fake-action :fake fake4)
+
+          plan (v/create-plan
+                 :steps [{:type           :action
+                          :implementation action1}
+                         {:type           :action
+                          :implementation action2}
+                         {:type           :action
+                          :implementation action3}
+                         {:type           :action
+                          :implementation action4}])
+
+          context {:a "0" :b "0" :c "0"}
+
+          results (v/execute-plan plan context)]
+      (is (fakes/was-called-once fake1 [context]))
+      (is (fakes/was-called-once fake2 [(merge context action-output1)]))
+      (is (fakes/was-called-once fake3 [(merge context action-output2)]))
+      (is (fakes/was-called-once fake4 [(merge context action-output2)]))
+      (is (= results {:context {:a "2"
+                                :b "4"
+                                :c "0"}
+                      :outputs [action-output1
+                                action-output2
+                                action-output3
+                                action-output4]
+                      :nested  []})))))
+
 (deftest executes-gatherers-and-passes-additional-context-to-actions
   (fakes/with-fakes
     (let [fake1 (fakes/recorded-fake [[fakes/any] "first-result"])
@@ -932,4 +1020,4 @@
                       :outputs []
                       :nested  [{:context context
                                  :outputs ["first-result"]
-                                 :nested []}]})))))
+                                 :nested  []}]})))))
