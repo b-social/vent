@@ -4,6 +4,8 @@ change log follows the conventions of
 [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+
+## [0.6.9] — 2022-03-31
 ### Added
 - `on-complement-of` event matcher utility that matches the complement of 
   the matcher it wraps. For example:
@@ -51,4 +53,5 @@ change log follows the conventions of
 [0.6.6]: https://github.com/your-name/vent/compare/0.6.5...0.6.6
 [0.6.7]: https://github.com/your-name/vent/compare/0.6.6...0.6.7
 [0.6.8]: https://github.com/your-name/vent/compare/0.6.7...0.6.8
-[Unreleased]: https://github.com/your-name/vent/compare/0.6.8...HEAD
+[0.6.9]: https://github.com/your-name/vent/compare/0.6.8...0.6.9
+[Unreleased]: https://github.com/your-name/vent/compare/0.6.9...HEAD
