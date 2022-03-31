@@ -201,6 +201,121 @@
                                          :initial-context context)}])]
           some-event-type-plans))))
 
+(deftest generates-action-when-on-type-complement-matched
+  (let [ruleset
+        (v/create-ruleset
+          (v/from-channel :some-event-channel
+            (v/on-complement-of
+              (v/on-type :some-event-type
+                         (v/act (capture-as :some-action))))))
+
+        event-channel "some-event-channel"
+        matching-event-payload
+        {:type    "some-other-event-type"
+         :message "An important message"}
+
+        matching-event
+        {:channel event-channel
+         :payload matching-event-payload}
+
+        non-matching-event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
+
+        non-matching-event
+        {:channel event-channel
+         :payload non-matching-event-payload}
+
+        context {:thing "thing"}
+
+        matching-plans (v/determine-plans ruleset matching-event context)
+        non-matching-plans (v/determine-plans
+                             ruleset non-matching-event context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event matching-event
+                                         :initial-context context)}])]
+           matching-plans))
+    (is (= [] non-matching-plans))))
+
+(deftest generates-action-when-on-types-complement-matched
+  (let [ruleset
+        (v/create-ruleset
+          (v/from-channel :some-event-channel
+            (v/on-complement-of
+              (v/on-types [:some-event-type :some-other-event-type]
+                         (v/act (capture-as :some-action))))))
+
+        event-channel "some-event-channel"
+        matching-event-payload
+        {:type    "some-third-event-type"
+         :message "An important message"}
+
+        matching-event
+        {:channel event-channel
+         :payload matching-event-payload}
+
+        non-matching-event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
+
+        non-matching-event
+        {:channel event-channel
+         :payload non-matching-event-payload}
+
+        context {:thing "thing"}
+
+        matching-plans (v/determine-plans ruleset matching-event context)
+        non-matching-plans (v/determine-plans
+                             ruleset non-matching-event context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event matching-event
+                                         :initial-context context)}])]
+           matching-plans))
+    (is (= [] non-matching-plans))))
+
+(deftest generates-action-when-on-complement-matched
+  (let [ruleset
+        (v/create-ruleset
+          (v/from-channel :some-event-channel
+            (v/on-complement-of
+              (v/on :do-not-process
+                    (v/act (capture-as :some-action))))))
+
+        event-channel "some-event-channel"
+        event-payload
+        {:type    "some-event-type"
+         :message "An important message"}
+
+        matching-event
+        {:channel event-channel
+         :payload event-payload
+         :do-not-process false}
+
+        non-matching-event
+        {:channel event-channel
+         :payload event-payload
+         :do-not-process true}
+
+        context {:thing "thing"}
+
+        matching-plans (v/determine-plans ruleset matching-event context)
+        non-matching-plans (v/determine-plans
+                             ruleset non-matching-event context)]
+    (is (= [(v/create-plan
+              :steps [{:type           :action
+                       :implementation (capturing-action
+                                         :identifier :some-action
+                                         :event matching-event
+                                         :initial-context context)}])]
+           matching-plans))
+    (is (= [] non-matching-plans))))
+
 (deftest correctly-determines-actions-when-many-event-channels-are-defined
   (let [ruleset
         (v/create-ruleset

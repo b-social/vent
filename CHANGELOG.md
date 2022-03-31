@@ -4,6 +4,15 @@ change log follows the conventions of
 [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
+### Added
+- `on-complement-of` event matcher utility that matches the complement of 
+  the matcher it wraps. For example:
+    - `(on-complement-of (on-type :do-not-match))` will match all types that
+      are not `:do-not-match`
+    - `(on-complement-of (on-types [:do-not-match-1 :do-not-match-2]))` will 
+      match all types that are not `:do-not-match-1` or `:do-not-match-2`
+    - `(on-complement-of (on :do-not-process))` will match all events that 
+      have a falsy property `:do-not-process`
 
 ## [0.6.8] — 2020-08-20
 

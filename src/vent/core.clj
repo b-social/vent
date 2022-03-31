@@ -132,6 +132,20 @@
   {:rule-matching-fn (constantly true)
    :handlers         handlers})
 
+(defn on-complement-of
+  "Takes a matcher and returns a matcher that matches its complement.
+
+  Examples:
+
+    - `(on-complement-of (on-type :do-not-match))` will match all types that
+      are not `:do-not-match`
+    - `(on-complement-of (on-types [:do-not-match-1 :do-not-match-2]))` will
+      match all types that are not `:do-not-match-1` or `:do-not-match-2`
+    - `(on-complement-of (on :do-not-process))` will match all events that
+      have a falsy property `:do-not-process`"
+  [matcher]
+  (update matcher :rule-matching-fn complement))
+
 (defn choose [& options]
   {:type    :choice
    :options options})

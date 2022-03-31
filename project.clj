@@ -17,9 +17,10 @@
              :test   [:shared]}
 
   :codox
-  {:namespaces  [#"^vent\."]
+  {:namespaces [#"^vent\."]
+   :metadata {:doc/format :markdown}
    :output-path "docs"
-   :source-uri  "https://github.com/b-social/vent/blob/{version}/{filepath}#L{line}"}
+   :source-uri "https://github.com/b-social/vent/blob/{version}/{filepath}#L{line}"}
 
   :eftest {:multithread? false}
   :deploy-repositories {"releases" {:url "https://repo.clojars.org"
