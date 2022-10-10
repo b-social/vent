@@ -5,8 +5,9 @@
 
 (defn- single-word [property]
   "Removes spaces from property and creates a single word joined by '-'"
-  (string/join "-" (string/split property #"(\s+)")))
+  (if (string? property)
+    (string/join "-" (string/split property #"(\s+)"))
+    property))
 
 (defn event-type-property [property]
   (fn [event] (keyword (single-word (hal/get-property (:payload event) property)))))
-

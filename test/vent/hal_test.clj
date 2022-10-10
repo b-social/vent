@@ -15,4 +15,7 @@
     (is (= :some-event-type ((event-type-property :type) (new-event "some      event type    ")))))
 
   (testing "keeps the string as it is if it's only one word"
-    (is (= :some-event-type ((event-type-property :type) (new-event "some-event-type"))))))
+    (is (= :some-event-type ((event-type-property :type) (new-event "some-event-type")))))
+
+  (testing "returns a keyword as it is if a keyword is passed"
+    (is (= :some-event-type ((event-type-property :type) (new-event :some-event-type))))))
