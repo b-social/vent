@@ -1,6 +1,5 @@
 (ns vent.hal
   (:require
-    [halboy.resource :as hal]
     [clojure.string :as string]))
 
 (defn- single-word [property]
@@ -10,4 +9,4 @@
     property))
 
 (defn event-type-property [property]
-  (fn [event] (keyword (single-word (hal/get-property (:payload event) property)))))
+  (fn [event] (keyword (single-word (get-in event [:payload :properties property])))))
