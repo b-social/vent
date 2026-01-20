@@ -3,7 +3,7 @@
   :url "https://github.com/b-social/vent"
   :license {:name "The MIT License"
             :url  "https://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.10.0"]
+  :dependencies [[org.clojure/clojure "1.11.2"]
                  [medley "1.0.0"]]
   :plugins [[lein-eftest "0.5.3"]
             [lein-changelog "0.3.2"]
